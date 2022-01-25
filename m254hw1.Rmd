@@ -1,0 +1,15 @@
+---
+name: Jiahao Tian
+title: "m254hw1"
+output: html_document
+---
+
+Name: Jiahao Tian
+
+Problem 1 Multipal Testing
+
+For every gene in the data set, perform a two-sample t-test with a two-sided alternative hypothesis to check if the gene is differentially expressed between the NSCLC cell lines and the RENAL cell lines. You can use the R function t.test(). This will result in 6, 830 tests in total.
+
+1.  Order the 6, 830 p-values from the smallest to the largest.  Plot the ordered p-values as the y-axis and their corresponding ranks as the x-axis.  If all the 6, 830 null hypotheses are true, the p-values should be uniformly distributed. Are the observed p-values likely from a uniform distribution?
+
+
