@@ -96,3 +96,69 @@ library(e1071)
 dat <- data.frame(NCI60$data[,1:2], y=factor(NCI60$labs))
 mod <- svm(y~., data=dat, kernel="linear", cost=10, scale = F)
 plot(mod, dat)
+
+```
+
+**Problem 3**
+
+library(tidyverse)
+
+```{r}
+rm(list=ls())
+babies <- read.table("babies.txt", header=TRUE)
+bwt.nonsmoke <- subset(babies, smoke==0)$bwt
+bwt.smoke <- subset(babies, smoke==1)$bwt
+
+#1. We will generate the following statistics based on a sample size of 10 and observe the following diﬀerence:
+
+permutation_test <- function(N=10, method='median', B=1000, randomseed=1) {
+
+  n <- N
+  set.seed(randomseed)
+  nonsmokers <- sample(bwt.nonsmoke , n)
+  smokers <- sample(bwt.smoke , n)
+  if(method=='mean') {
+    diff <- mean(smokers) - mean(nonsmokers)
+  } else if(method=='median') diff <- median(smokers) - median(nonsmokers)
+  else return("Choose between 'mean' and 'median' !")
+  
+ if(B > 100000) return("Iteration cannot be greater than 1000000 !")
+  diff_permute <- c()
+  for (i in 1:B) {
+    dat <- c(smokers, nonsmokers)
+    shuffle <- sample(dat)
+    smokers_star <- shuffle[1:n]
+    nonsmokers_star <- shuffle[(n+1):(2*n)]
+    if(method=='mean') {
+      diff_star <- mean(smokers_star) - mean(nonsmokers_star)
+    } else if(method=='median') {
+      diff_star <- median(smokers_star) - median(nonsmokers_star)
+    }
+    diff_permute <- c(diff_permute, diff_star)
+  }
+  p <- (sum(diff_permute <= -abs(diff)) + sum(diff_permute >= abs(diff))) / B
+  return(list(test_statstic=diff, permutation=diff_permute, p_value=p))
+}
+result_mean <- permutation_test(N=10, method = 'mean', B=1000, randomseed=1)
+result_mean$p_value
+
+hist(result_mean$permutation, breaks = 20,  xlab='null statistic',
+     main = 'Hist. of null dist. (N=10, B=1000, mean)')
+abline(v=result_mean$test_statstic, lwd=5)
+text(-10, 80, paste("Test stat. with p value:", result_mean$p_value), cex=1.5)
+
+#2. Repeat the above exercise, but instead of the diﬀerences in mean, consider the diﬀerences in median.
+
+result_med  <- permutation_test(N=10, method = 'median', B=1000, randomseed=1)
+result_med$p_value
+
+hist(result_med$permutation, breaks = 20, xlab='null statistic',
+     main = 'Hist. of null dist. (N=10, B=1000, median)')
+abline(v=result_med$test_statstic, lwd=5)
+text(-10, 80, paste("Test stat. with p value:", result_med$p_value), cex=1.5)
+```
+
+
+  
+
+
