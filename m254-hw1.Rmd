@@ -14,13 +14,11 @@ dim(NCI60$data)
 head(NCI60$labs) 
 table(NCI60$labs)
 ```
+**Problem 1**
 
-#1. Order the 6, 830 p-values from the smallest to the largest. Plot the ordered
-#p-values as the y-axis and their corresponding ranks as the x-axis. If all the 6, 830 
-#null hypotheses are true, the p-values should be uniformly distributed. Are the 
-#observed p-values likely from a uniform distribution?
+1. Order the 6, 830 p-values from the smallest to the largest. Plot the ordered p-values as the y-axis and their corresponding ranks as the x-axis. If all the 6, 830 null hypotheses are true, the p-values should be uniformly distributed. Are the observed p-values likely from a uniform distribution?
 
-**Solution: Yes, it is uniform distributuin.
+**Solution:** Yes, it is uniform distribution.
 
 ```{r}
 NSCLC <- NCI60$data[NCI60$labs=='NSCLC',] 
@@ -38,5 +36,22 @@ plot(ecdf(sort_p), main="Empirical Dist. of Ordered p-values", col="blue")
 lines(x=seq(0,1,0.01), y=seq(0,1,0.01), col="red", lwd=1.5)
 text(0.8, 0.6, "Theoretical cdf", col="red")
 text(0.25, 0.6, "Empirical cdf", col="blue")
+```
+
+2. What will be the p-value cutoﬀ if you would like to control the Family Wise Error Rate un-
+ der 0.05 using the Bonferroni correction? How many genes will be identiﬁed as diﬀerentially
+ expressed using this cutoﬀ?
+ 
+ **Solution:** P-value cutoff will be around 3e-04, and none of the gene will 
+ be identified as differentially expressed.
+ 
+ 
+```{r}
+ plot(sort_p, cex=0.5, xlim = c(1, 25), ylim = c(0, 0.0008),
+     main = "FDR and FWER", xlab = 'index i', ylab = 'p-value', pch=8)
+
+x <- c(1:6830); fdr <- c(x/6830*0.05); bonforroni <- rep(0.05 / 6830, times=length(x));
+holm <- c(0.05/(length(x)-x+1))
+sum(sort_p <= bonforroni[1])
 ```
 
