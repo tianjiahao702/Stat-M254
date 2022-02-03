@@ -158,7 +158,25 @@ abline(v=result_med$test_statstic, lwd=5)
 text(-10, 80, paste("Test stat. with p value:", result_med$p_value), cex=1.5)
 ```
 
+**Problem 4**
 
-  
+```{r}
+#1. Please display the Q-Q plots and argue whether the Gaussian assumption is reasonable for this data set.
+
+qqnorm(bwt.nonsmoke, main = "QQ plot for nonsmokers")
+qqline(bwt.nonsmoke,col=2)
+
+qqnorm(bwt.smoke, main = "QQ plot for smokers")
+qqline(bwt.smoke,col=2)
+
+#2. Perform the t test using the following R codes. Compare the resulting p-value with what you
+# obtain from the permutation test in Problem 3. Do you reach the same conclusion?
+
+n <- 10
+nonsmokers <- sample(bwt.nonsmoke , n)
+smokers <- sample(bwt.smoke , n)
+result <- t.test(nonsmokers, smokers, alternative = 'two.sided')
+result$p.value
+```
 
 
