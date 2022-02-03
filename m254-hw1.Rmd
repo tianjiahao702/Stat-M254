@@ -1,0 +1,17 @@
+---
+title: "m254-hw1 Name: Jiahao Tian"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ISLR)
+dim(NCI60$data)
+head(NCI60$labs) 
+table(NCI60$labs)
+```
+
