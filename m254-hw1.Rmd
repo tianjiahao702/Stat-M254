@@ -15,3 +15,28 @@ head(NCI60$labs)
 table(NCI60$labs)
 ```
 
+#1. Order the 6, 830 p-values from the smallest to the largest. Plot the ordered
+#p-values as the y-axis and their corresponding ranks as the x-axis. If all the 6, 830 
+#null hypotheses are true, the p-values should be uniformly distributed. Are the 
+#observed p-values likely from a uniform distribution?
+
+**Solution: Yes, it is uniform distributuin.
+
+```{r}
+NSCLC <- NCI60$data[NCI60$labs=='NSCLC',] 
+RENAL <- NCI60$data[NCI60$labs=='RENAL',] 
+p_values <- mapply(function(i) 
+  t.test(NSCLC[,i], RENAL[,i], var.equal = T, 
+         paired = F, alternative = "two.sided")$p.value, 
+  1:ncol(NSCLC))
+
+sort_p <- sort(p_values)
+plot(sort_p, xlab = "Rank", ylab = "p value", 
+     cex=0.1, col='blue', main = "Sorted p value")
+
+plot(ecdf(sort_p), main="Empirical Dist. of Ordered p-values", col="blue")
+lines(x=seq(0,1,0.01), y=seq(0,1,0.01), col="red", lwd=1.5)
+text(0.8, 0.6, "Theoretical cdf", col="red")
+text(0.25, 0.6, "Empirical cdf", col="blue")
+```
+
