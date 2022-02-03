@@ -20,18 +20,22 @@ table(NCI60$labs)
 
 **Solution:** Yes, it is uniform distribution.
 
-2. What will be the p-value cutoﬀ if you would like to control the Family Wise Error Rate un-
- der 0.05 using the Bonferroni correction? How many genes will be identiﬁed as differentially
- expressed using this cutoﬀ?
+2. What will be the p-value cutoﬀ if you would like to control the Family Wise Error Rate under 0.05 using the Bonferroni correction? How many genes will be identiﬁed as differentially
+expressed using this cutoﬀ?
+
+**Solution:** The cutoff will be 0.05/6830=7.32*10^-6. None of the genes will be idetnified as differentially.
  
 3. What will be the p-value cutoﬀ if you would like to control the False Discovery Rate under 0.05
  using the Benjamini-Hochberg procedure? How many genes will be identiﬁed as diﬀerentially
  expressed using this cutoﬀ?
  
+ **Solution:** The cutoff is 0. Because the null hypothesis is rejected by BH procedure.
+ 
 4. What will be the p-value cutoﬀ if you would like to control the Per-Comparison Error Rate
  (i.e., signiﬁcance level) under 0.05? How many genes will be identiﬁed as diﬀerentially expressed
  using this cutoﬀ?
  
+ **Solution:** The cutoff is 0.05. And there are 707 genes will be identified as differentially expressed.
 
 ```{r}
 NSCLC <- NCI60$data[NCI60$labs=='NSCLC',] 
@@ -40,30 +44,24 @@ p_values <- mapply(function(i)
   t.test(NSCLC[,i], RENAL[,i], var.equal = T, 
          paired = F, alternative = "two.sided")$p.value, 
   1:ncol(NSCLC))
-
 sort_p <- sort(p_values)
 plot(sort_p, xlab = "Rank", ylab = "p value", 
      cex=0.1, col='blue', main = "Sorted p value")
-
 plot(ecdf(sort_p), main="Empirical Dist. of Ordered p-values", col="blue")
 lines(x=seq(0,1,0.01), y=seq(0,1,0.01), col="red", lwd=1.5)
 text(0.8, 0.6, "Theoretical cdf", col="red")
 text(0.25, 0.6, "Empirical cdf", col="blue")
-
 plot(sort_p, cex=0.5, xlim = c(1, 25), ylim = c(0, 0.0008),
      main = "FDR and FWER", xlab = 'index i', ylab = 'p-value', pch=8)
-
 x <- c(1:6830); fdr <- c(x/6830*0.05); bonforroni <- rep(0.05 / 6830, times=length(x));
 holm <- c(0.05/(length(x)-x+1))
 sum(sort_p <= bonforroni[1])
-
 lines(x, fdr,  lwd=1.5)
 lines(x, bonforroni,  lwd=1.5)
 lines(x, holm, lwd=0.5)
 text(20, 0.00001, "Holm's")
 text(23, 0.00001, "Bonforroni")
 text(18, 0.0002, "FDR")
-
  sum(p_values<=0.05)
 ```
  
@@ -71,35 +69,59 @@ text(18, 0.0002, "FDR")
 
 Use the NCI60 data, give an example to each of the following data analysis tasks (please refer to the Leek and Peng, Science (2015) articl). Note: this is an open question;diﬀerent people may give diﬀ erence examples to the same task.
 
+**Solutions:**
+
 1. Descriptive study
+In this dataset, there are 6830 columns and 64 rows.
+
+**Solutions:**
+
 2. Exploratory study
+Just calculate the genes' mean
+
+**Solutions:**
+
 3. Inferential study
+Using different gene to get a SLM and see if there is any linear relationship.
+
+**Solutions:**
+
 4. Predictive study
+Use different model or plot to distinguish each gene.
+
+**Solutions:**
+
 5. Causal study
+Use different model or plot to see different between to genes.
+
+**Solutions:**
+
 6. Mechanistic study
+Use model or plot to see a genes experssion among other type.
 
 ```{r}
 ## Descriptive study
 table(NCI60$labs)
-
 ## Exploratory study
 plot(round(apply(NCI60$data, 2, mean)[1:20], 4), xlab="Cell type", 
      ylab="Gene expression", 
      main="Exploratory of first 10 genes", pch=3)
-
 ## Inferential study
 plot(NCI60$data[,1], NCI60$data[,2], xlab="Gene 1", ylab="Gene 2", cex=0.4, 
      pch=1, main = "Inferential study of gene 1 and 2")
-
 ## Predictive study
 library(e1071)
 dat <- data.frame(NCI60$data[,1:2], y=factor(NCI60$labs))
 mod <- svm(y~., data=dat, kernel="linear", cost=10, scale = F)
 plot(mod, dat)
-
 ```
 
 **Problem 3**
+
+**Solution:** 
+
+For 3.1 p-value is 0.116
+For 3.2 p-value is 0.286
 
 library(tidyverse)
 
@@ -158,7 +180,17 @@ abline(v=result_med$test_statstic, lwd=5)
 text(-10, 80, paste("Test stat. with p value:", result_med$p_value), cex=1.5)
 ```
 
+
+
 **Problem 4**
+
+**Soluiton 4.1:**
+For smokers, the data is normal distributed.
+For non-smokers, the data is skewed.
+
+**Soluiton 4.2:**
+The p-value is 0.056, which shows that there is not significant and we do not reject the null hypothesis.
+
 
 ```{r}
 #1. Please display the Q-Q plots and argue whether the Gaussian assumption is reasonable for this data set.
@@ -178,5 +210,40 @@ smokers <- sample(bwt.smoke , n)
 result <- t.test(nonsmokers, smokers, alternative = 'two.sided')
 result$p.value
 ```
+
+**Problem 5**
+
+P = (0.99/3900)/((0.99/3900)+(0.01*3899/3900))=2.46%
+
+
+
+
+
+
+**Problem 7**
+
+Now increase n to 100. Repeat the above simulation, how does the distribution of the one million sample means change?
+
+Now further increase n to 1000. Repeat the above simulation, how does the distribution of the one million sample means change?
+
+What do we conclude about the distribution of the sample mean?
+
+**Soluiton:** 
+The distribution of simple mean will concertrate on a simple point.
+
+**Soluiton:code for problem 7**
+dist_sample_mean <- function(sample_size=10, B=1000) {
+  n <- sample_size
+  x <- matrix(rnorm(n*B), ncol = B)
+  hist(apply(x, 2, mean), breaks=100, freq=T, xlab='Sample mean',
+       main = paste('Hist. of sample mean (sample distribution) [ N=', sample_size, ']'))
+}
+
+#(i) N=10
+dist_sample_mean(10, 1000000)
+#(ii) N=100
+dist_sample_mean(100, 1000000)
+#(iii) N=1000
+dist_sample_mean(1000, 1000000)
 
 
