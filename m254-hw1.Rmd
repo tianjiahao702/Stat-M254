@@ -20,6 +20,19 @@ table(NCI60$labs)
 
 **Solution:** Yes, it is uniform distribution.
 
+2. What will be the p-value cutoﬀ if you would like to control the Family Wise Error Rate un-
+ der 0.05 using the Bonferroni correction? How many genes will be identiﬁed as differentially
+ expressed using this cutoﬀ?
+ 
+3. What will be the p-value cutoﬀ if you would like to control the False Discovery Rate under 0.05
+ using the Benjamini-Hochberg procedure? How many genes will be identiﬁed as diﬀerentially
+ expressed using this cutoﬀ?
+ 
+4. What will be the p-value cutoﬀ if you would like to control the Per-Comparison Error Rate
+ (i.e., signiﬁcance level) under 0.05? How many genes will be identiﬁed as diﬀerentially expressed
+ using this cutoﬀ?
+ 
+
 ```{r}
 NSCLC <- NCI60$data[NCI60$labs=='NSCLC',] 
 RENAL <- NCI60$data[NCI60$labs=='RENAL',] 
@@ -36,22 +49,50 @@ plot(ecdf(sort_p), main="Empirical Dist. of Ordered p-values", col="blue")
 lines(x=seq(0,1,0.01), y=seq(0,1,0.01), col="red", lwd=1.5)
 text(0.8, 0.6, "Theoretical cdf", col="red")
 text(0.25, 0.6, "Empirical cdf", col="blue")
-```
 
-2. What will be the p-value cutoﬀ if you would like to control the Family Wise Error Rate un-
- der 0.05 using the Bonferroni correction? How many genes will be identiﬁed as diﬀerentially
- expressed using this cutoﬀ?
- 
- **Solution:** P-value cutoff will be around 3e-04, and none of the gene will 
- be identified as differentially expressed.
- 
- 
-```{r}
- plot(sort_p, cex=0.5, xlim = c(1, 25), ylim = c(0, 0.0008),
+plot(sort_p, cex=0.5, xlim = c(1, 25), ylim = c(0, 0.0008),
      main = "FDR and FWER", xlab = 'index i', ylab = 'p-value', pch=8)
 
 x <- c(1:6830); fdr <- c(x/6830*0.05); bonforroni <- rep(0.05 / 6830, times=length(x));
 holm <- c(0.05/(length(x)-x+1))
 sum(sort_p <= bonforroni[1])
-```
 
+lines(x, fdr,  lwd=1.5)
+lines(x, bonforroni,  lwd=1.5)
+lines(x, holm, lwd=0.5)
+text(20, 0.00001, "Holm's")
+text(23, 0.00001, "Bonforroni")
+text(18, 0.0002, "FDR")
+
+ sum(p_values<=0.05)
+```
+ 
+**Problem 2**
+
+Use the NCI60 data, give an example to each of the following data analysis tasks (please refer to the Leek and Peng, Science (2015) articl). Note: this is an open question;diﬀerent people may give diﬀ erence examples to the same task.
+
+1. Descriptive study
+2. Exploratory study
+3. Inferential study
+4. Predictive study
+5. Causal study
+6. Mechanistic study
+
+```{r}
+## Descriptive study
+table(NCI60$labs)
+
+## Exploratory study
+plot(round(apply(NCI60$data, 2, mean)[1:20], 4), xlab="Cell type", 
+     ylab="Gene expression", 
+     main="Exploratory of first 10 genes", pch=3)
+
+## Inferential study
+plot(NCI60$data[,1], NCI60$data[,2], xlab="Gene 1", ylab="Gene 2", cex=0.4, 
+     pch=1, main = "Inferential study of gene 1 and 2")
+
+## Predictive study
+library(e1071)
+dat <- data.frame(NCI60$data[,1:2], y=factor(NCI60$labs))
+mod <- svm(y~., data=dat, kernel="linear", cost=10, scale = F)
+plot(mod, dat)
