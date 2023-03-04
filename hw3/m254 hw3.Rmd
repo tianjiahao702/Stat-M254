@@ -1,0 +1,791 @@
+---
+title: "M254 hw3"
+quthor: Jiahao Tian
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+setwd("~/Desktop/stat M254/hw3")
+library(M3C)
+library(acepack)
+library(psych)
+library(acepack)
+library(energy)
+library(minerva)
+library(XICOR)
+```
+
+**Problem 1**
+
+**Solution:**
+
+```{r}
+row.names(USArrests)
+names(USArrests)
+```
+
+**Solution for part 1:**
+
+```{r}
+result <- prcomp(USArrests, center = T, scale. = T)
+round(result$rotation, 3)
+```
+
+**Solution for part 2:**
+
+```{r}
+summary(result)
+```
+
+**Solution for part 3:**
+
+```{r}
+biplot(result, cex=0.6,expand=0.9,col=c('black','red'))
+```
+
+From the plot, Maryland, New Mexico, Michigan and Florida form a cluster around murder, 
+assault and rape. California and several states form a cluster against urban pop.
+
+The clusters in the plot indicates similarity between samples: for example, in this plot, there's a cluster 
+that contains New Jersey, Massachusetts, Hawaii, and Rhode Islands, meaning that these states are highly 
+similar to each other. 
+
+The plot shows that UrbanPop have a strong negative impact on both PCs and the angles between vectors 
+tell us how characteristics correlate with one another. Small angle between Murder and Assault shows 
+that the two variables are positively correlated, and the right angle between Murder and UrbanPop 
+shows that the two variables are not likely to be correlated.
+
+**Solution for part 4:**
+
+```{r}
+library(magrittr)
+library(dplyr)
+library(ggpubr)
+usas <- USArrests %>%
+  dist() %>%          
+  cmdscale() %>%
+  as_tibble()
+colnames(usas) <- c("Dim.1", "Dim.2")
+ggscatter(usas, x = "Dim.1", y = "Dim.2", 
+          label = rownames(USArrests),
+          size = 1, color = "blue",
+          repel = TRUE)
+```
+
+From the results, t-SNE is good for visualization. The PCA and MDS plots looks not that different.
+t-SNE preserves only local similarities, it does not preserve the pairwise distances as MDS, also, does not
+pairwise visualized principal compoments as PCA.
+
+**Solution for part 5:**
+
+```{r}
+library(M3C)
+data = USArrests
+umap(t(data),
+     labels = scale(as.numeric(t(data)[row.names(t(data))=='Murder',])), 
+     text = colnames(t(data)))
+umap(t(data),
+     labels = scale(as.numeric(t(data)[row.names(t(data))=='Assault',])), 
+     text = colnames(t(data)))
+umap(t(data),
+     labels = scale(as.numeric(t(data)[row.names(t(data))=='UrbanPop',])), 
+     text = colnames(t(data)))
+umap(t(data),
+     labels = scale(as.numeric(t(data)[row.names(t(data))=='Rape',])), 
+     text = colnames(t(data)))
+```
+
+```{r}
+library(M3C)
+data = USArrests
+tsne(t(data),
+     labels = scale(as.numeric(t(data)[row.names(t(data))=='Murder',])),
+     text = colnames(t(data)))
+tsne(t(data),
+     labels = scale(as.numeric(t(data)[row.names(t(data))=='Assault',])), 
+     text = colnames(t(data)))
+tsne(t(data),
+     labels = scale(as.numeric(t(data)[row.names(t(data))=='UrbanPop',])), 
+     text = colnames(t(data)))
+tsne(t(data),
+     labels = scale(as.numeric(t(data)[row.names(t(data))=='Rape',])), 
+     text = colnames(t(data)))
+```
+
+From the results, the scales of Murder, Assault and Rape index looks like some of them are very
+high and some of them are very low. But for Urban pop it's like average in every cluster. Also, from the
+results, t-SNE is good for visualization. The PCA and MDS plots looks not that different. t-SNE preserves only
+local similarities, it does not preserve the pairwise distances as MDS, also, does not
+pairwise visualized principal compoments as PCA.
+
+**Problem 2**
+
+**Solution:**
+
+```{r}
+B = 1000; n=100
+
+power_H1_pearson <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "pearson"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "pearson"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H1_pearson <- c(power_H1_pearson, 
+                 sum(result_alt >= max(threshold) | 
+                       result_alt <= min(threshold)) / length(result_alt))
+}
+print(power_H1_pearson)
+```
+
+```{r}
+power_H2_pearson <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt ** 2 + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "pearson"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "pearson"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H2_pearson <- c(power_H2_pearson, 
+                 sum(result_alt >= max(threshold) | 
+                       result_alt <= min(threshold)) / length(result_alt))
+}
+print(power_H2_pearson)
+```
+
+```{r}
+power_H3_pearson <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- sin(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "pearson"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "pearson"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H3_pearson <- c(power_H3_pearson, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+print(power_H3_pearson)
+```
+
+```{r}
+power_H4 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- sign(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "pearson"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "pearson"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H4 <- c(power_H4, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H4_pearson <- power_H4
+print(power_H4_pearson)
+```
+
+```{r}
+power_H5 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt * (-1)**rbinom(1,1,0.5) + rnorm(
+      n, mean=0, sd=sigma2^0.5
+      )
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "pearson"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "pearson"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H5 <- c(power_H5, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H5_pearson <- power_H5
+print(power_H5_pearson)
+```
+
+```{r}
+power_H1 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "spearman"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "spearman"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H1 <- c(power_H1, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H1_spearman <- power_H1
+print(power_H1_spearman)
+```
+
+```{r}
+power_H2 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt ** 2 + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "spearman"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "spearman"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H2 <- c(power_H2, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H2_spearman <- power_H2
+print(power_H2_spearman)
+```
+
+```{r}
+power_H3 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- sin(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "spearman"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "spearman"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H3 <- c(power_H3, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H3_spearman <- power_H3
+print(power_H3_spearman)
+```
+
+```{r}
+power_H4 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- sign(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "spearman"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "spearman"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H4 <- c(power_H4, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H4_spearman <- power_H4
+print(power_H4_spearman)
+```
+
+```{r}
+power_H5 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt * (-1)**rbinom(1,1,0.5) + rnorm(
+      n, mean=0, sd=sigma2^0.5
+      )
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "spearman"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "spearman"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H5 <- c(power_H5, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H5_spearman <- power_H5
+print(power_H5_spearman)
+```
+
+```{r}
+power_H1 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "kendall"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "kendall"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H1 <- c(power_H1, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H1_kendall<- power_H1
+print(power_H1_kendall)
+```
+
+```{r}
+power_H2 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt ** 2 + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "kendall"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "kendall"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H2 <- c(power_H2, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H2_kendall <- power_H2
+print(power_H2_kendall)
+```
+
+```{r}
+power_H3 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- sin(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "kendall"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "kendall"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H3 <- c(power_H3, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H3_kendall <- power_H3
+print(power_H3_kendall)
+```
+
+```{r}
+power_H4 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- sign(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "kendall"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "kendall"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H4 <- c(power_H4, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H4_kendall <- power_H4
+print(power_H4_kendall)
+```
+
+```{r}
+power_H5 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt * (-1)**rbinom(1,1,0.5) + rnorm(
+      n, mean=0, sd=sigma2^0.5
+      )
+    
+    result_null <- c(result_null, cor(x_null, y_null, method = "kendall"))
+    result_alt <- c(result_alt, cor(x_alt, y_alt, method = "kendall"))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H5 <- c(power_H5, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H5_kendall <- power_H5
+print(power_H5_kendall)
+```
+
+```{r}
+library(acepack)
+power_H1 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    null_ace <- ace(x_null, y_null)
+    alt_ace <- ace(x_alt, y_alt)
+    result_null <- c(result_null, cor(null_ace$tx, null_ace$ty))
+    result_alt <- c(result_alt, cor(alt_ace$tx, alt_ace$ty))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H1 <- c(power_H1, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H1_ace <- power_H1
+print(power_H1_ace)
+```
+
+```{r}
+power_H2 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt ** 2 + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    null_ace <- ace(x_null, y_null); alt_ace <- ace(x_alt, y_alt)
+    result_null <- c(result_null, cor(null_ace$tx, null_ace$ty))
+    result_alt <- c(result_alt, cor(alt_ace$tx, alt_ace$ty))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H2 <- c(power_H2, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H2_ace <- power_H2
+print(power_H2_ace)
+```
+
+```{r}
+power_H3 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- sin(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    null_ace <- ace(x_null, y_null); alt_ace <- ace(x_alt, y_alt)
+    result_null <- c(result_null, cor(null_ace$tx, null_ace$ty))
+    result_alt <- c(result_alt, cor(alt_ace$tx, alt_ace$ty))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H3 <- c(power_H3, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H3_ace <- power_H3
+print(power_H3)
+```
+
+```{r}
+power_H4 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- sign(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+    
+    null_ace <- ace(x_null, y_null); alt_ace <- ace(x_alt, y_alt)
+    result_null <- c(result_null, cor(null_ace$tx, null_ace$ty))
+    result_alt <- c(result_alt, cor(alt_ace$tx, alt_ace$ty))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H4 <- c(power_H4, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H4_ace <- power_H4
+print(power_H4_ace)
+```
+
+```{r}
+power_H5 <- c()
+for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+  result_null <- c(); result_alt <- c()
+  for(i in 1:B) {
+    x_null <- rnorm(n); y_null <- rnorm(n)
+    x_alt <- rnorm(n); y_alt <- x_alt * (-1)**rbinom(1,1,0.5) + rnorm(
+      n, mean=0, sd=sigma2^0.5
+      )
+    
+    null_ace <- ace(x_null, y_null); alt_ace <- ace(x_alt, y_alt)
+    result_null <- c(result_null, cor(null_ace$tx, null_ace$ty))
+    result_alt <- c(result_alt, cor(alt_ace$tx, alt_ace$ty))
+  }
+  threshold <- quantile(result_null, probs=c(0.975, 0.025))
+  power_H5 <- c(power_H5, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+}
+power_H5_ace <- power_H5
+print(power_H5_ace)
+```
+
+```{r}
+power_dc <- function(alter=1) {
+  power_ <- c()
+  for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+    result_null <- c(); result_alt <- c()
+    for(i in 1:B) {
+      x_null <- rnorm(n); y_null <- rnorm(n)
+      x_alt <- rnorm(n); 
+      if(alter == 5) {
+        y_alt <- x_alt * (-1)**rbinom(1,1,0.5) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 4) {
+        y_alt <- sign(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 3) {
+        y_alt <- sin(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 2) {
+        y_alt <- x_alt ** 2 + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 1) {
+        y_alt <- x_alt + rnorm(n, mean=0, sd=sigma2^0.5)
+      }
+      
+      result_null <- c(result_null, DCOR(x_null, y_null, 2)$dCor)
+      result_alt <- c(result_alt, DCOR(x_alt, y_alt, 2)$dCor)
+    }
+    threshold <- quantile(result_null, probs=c(0.975, 0.025))
+    power_ <- c(power_, 
+                  sum(result_alt >= max(threshold) | 
+                        result_alt <= min(threshold)) / length(result_alt))
+  }
+  power_
+}
+power_H1_dc <- power_dc(1)
+power_H2_dc <- power_dc(2)
+power_H3_dc <- power_dc(3)
+power_H4_dc <- power_dc(4)
+power_H5_dc <- power_dc(5)
+```
+
+```{r}
+power_mic <- function(alter=1) {
+  power_ <- c()
+  for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+    result_null <- c(); result_alt <- c()
+    for(i in 1:B) {
+      x_null <- rnorm(n); y_null <- rnorm(n)
+      x_alt <- rnorm(n); 
+      if(alter == 5) {
+        y_alt <- x_alt * (-1)**rbinom(1,1,0.5) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 4) {
+        y_alt <- sign(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 3) {
+        y_alt <- sin(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 2) {
+        y_alt <- x_alt ** 2 + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 1) {
+        y_alt <- x_alt + rnorm(n, mean=0, sd=sigma2^0.5)
+      }
+      
+      result_null <- c(result_null, cstats(as.matrix(x_null), as.matrix(y_null))[3])
+      result_alt <- c(result_alt, cstats(as.matrix(x_alt), as.matrix(y_alt))[3])
+    }
+    threshold <- quantile(result_null, probs=c(0.975, 0.025))
+    power_ <- c(power_, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+  }
+  power_
+}
+power_H1_mic <- power_mic(1)
+power_H2_mic <- power_mic(2)
+power_H3_mic <- power_mic(3)
+power_H4_mic <- power_mic(4)
+power_H5_mic <- power_mic(5)
+```
+
+```{r}
+power_cc <- function(alter=1) {
+  power_ <- c()
+  for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+    result_null <- c(); result_alt <- c()
+    for(i in 1:B) {
+      x_null <- rnorm(n); y_null <- rnorm(n)
+      x_alt <- rnorm(n); 
+      if(alter == 5) {
+        y_alt <- x_alt * (-1)**rbinom(1,1,0.5) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 4) {
+        y_alt <- sign(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 3) {
+        y_alt <- sin(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 2) {
+        y_alt <- x_alt ** 2 + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 1) {
+        y_alt <- x_alt + rnorm(n, mean=0, sd=sigma2^0.5)
+      }
+      
+      result_null <- c(result_null, xicor(x_null, y_null))
+      result_alt <- c(result_alt, xicor(x_alt, y_alt))
+    }
+    threshold <- quantile(result_null, probs=c(0.975, 0.025))
+    power_ <- c(power_, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+  }
+  power_
+}
+power_H1_cc <- power_cc(1)
+power_H2_cc <- power_cc(2)
+power_H3_cc <- power_cc(3)
+power_H4_cc <- power_cc(4)
+power_H5_cc <- power_cc(5)
+
+
+```
+
+```{r}
+library(mvtnorm)
+library(gR2)
+
+power_gR2 <- function(alter=1) {
+  power_ <- c()
+  for(sigma2 in c(.1, .3, .5, .7, .9, 1.1, 1.3, 1.5)) {
+    result_null <- c(); result_alt <- c()
+    for(i in 1:B) {
+      x_null <- rnorm(n); y_null <- rnorm(n)
+      x_alt <- rnorm(n); 
+      if(alter == 5) {
+        y_alt <- x_alt * (-1)**rbinom(1,1,0.5) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 4) {
+        y_alt <- sign(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 3) {
+        y_alt <- sin(x_alt) + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 2) {
+        y_alt <- x_alt ** 2 + rnorm(n, mean=0, sd=sigma2^0.5)
+      } else if(alter == 1) {
+        y_alt <- x_alt + rnorm(n, mean=0, sd=sigma2^0.5)
+      }
+      
+      result_null <- c(result_null, 
+                       gR2(x_null,
+                           y_null,
+                           K=1,
+                           regressionMethod="LM")$estimate)
+      result_alt <- c(result_alt, 
+                      gR2(x_alt,y_alt,
+                          K=1,
+                          regressionMethod="LM")$estimate)
+    }
+    threshold <- quantile(result_null, probs=c(0.975, 0.025))
+    power_ <- c(power_, 
+                sum(result_alt >= max(threshold) | 
+                      result_alt <= min(threshold)) / length(result_alt))
+  }
+  power_
+}
+power_H1_gR2 <- power_gR2(1)
+power_H2_gR2 <- power_gR2(2)
+power_H3_gR2 <- power_gR2(3)
+power_H4_gR2 <- power_gR2(4)
+power_H5_gR2 <- power_gR2(5)
+
+
+power <- tibble(power_H1_ace=power_H1_ace,
+                    power_H2_ace=power_H2_ace,
+                    power_H3_ace=power_H3_ace,
+                    power_H4_ace=power_H4_ace,
+                    power_H1_spearman = power_H1_spearman,
+                    power_H2_spearman = power_H2_spearman,
+                    power_H3_spearman = power_H3_spearman,
+                    power_H4_spearman = power_H4_spearman,
+                    power_H1_pearson = power_H1_pearson,
+                    power_H2_pearson = power_H2_pearson,
+                    power_H3_pearson = power_H3_pearson,
+                    power_H4_pearson = power_H4_pearson,
+                    power_H1_kendall = power_H1_kendall,
+                    power_H2_kendall = power_H2_kendall,
+                    power_H3_kendall = power_H3_kendall,
+                    power_H4_kendall = power_H4_kendall,
+                    power_H1_dc = power_H1_dc,
+                    power_H2_dc = power_H2_dc,
+                    power_H3_dc = power_H3_dc,
+                    power_H4_dc = power_H4_dc,
+                    power_H1_mic = power_H1_mic,
+                    power_H2_mic = power_H2_mic,
+                    power_H3_mic = power_H3_mic,
+                    power_H4_mic = power_H4_mic,
+                    power_H1_cc = power_H1_cc,
+                    power_H2_cc = power_H2_cc,
+                    power_H3_cc = power_H3_cc,
+                    power_H4_cc = power_H4_cc,
+                    power_H1_gR2 = power_H1_gR2, 
+                    power_H2_gR2 = power_H2_gR2,
+                    power_H3_gR2,
+                    power_H4_gR2)
+write.csv(power, 'power.csv')
+power
+```
+
+Conclusion:
+Distance correlation has power estimates across all tests at all sigma square values.Pearson and spearman rank
+correlations have higher power estimates on all tests except H0 vs H2. they do not work well in square relationship 
+or nonlinear relationship.
+
+Generalized Pearson correlation squares has fluctuated power estimates on H0 vs H4. In general the value being 
+very high. Maximal correlation and maximal information coefficient has decreasing power estimates in 
+case H0 vs H3 and H0 vs H1, when sigma square increases shown in the graph. For H0 vs H1, the decreasing scale 
+is minor to observe.
+
+Kendall is not shown clearly in the graph but according to the value we get it is similar to pearson and spearman.
+
+Chatterjee has a drop in H0 vs H1 and H0 vs H3, and it also has minor drop in H2 and H4.
+
+**Problem 3**
+
+**Solution:**
+
+```{r}
+library(psych)
+library(psychTools)
+library(XICOR)
+library(energy)
+library(minerva)
+library(gR2)
+data(peas)
+cor(peas$parent, peas$child, method = 'pearson')
+xicor(peas$parent, peas$child)
+xicor(peas$child, peas$parent)
+table = table(peas$child, peas$parent)
+table
+cor(peas$parent, peas$child, method = 'pearson')
+cor(peas$parent, peas$child, method = 'spearman')
+cor(peas$parent, peas$child, method = 'kendall')
+ace(peas$parent, peas$child)$rsq
+dcor(peas$parent, peas$child)
+mine(peas$parent, peas$child)$MIC
+xicor(peas$parent, peas$child)
+gR2(peas$parent, peas$child, K=2, mc.cores = 1)$estimate
+cor(peas$child, peas$parent, method = 'pearson')
+cor(peas$child, peas$parent, method = 'spearman')
+cor(peas$child, peas$parent, method = 'kendall')
+ace(peas$child, peas$parent)$rsq
+dcor(peas$child, peas$parent)
+mine(peas$child, peas$parent)$MIC
+xicor(peas$child, peas$parent)
+gR2(peas$child, peas$parent, K=2, mc.cores = 1)$estimate
+```
+
+From the results, when change the position of child and parent, all functions gives correlation
+coefficient number except xicor function. Therefore, when compare to other measurements, xicor
+took nonlinear dependency into account.
